@@ -1,21 +1,35 @@
-import userData from "./dummy.json";
+import bcrypt from "bcrypt"
+import userDataJson from "./dummy.json";
 import { LogInInfo, SignUpInfo, User } from "./types";
 
-const login = ({email, password}: LogInInfo) => {
-    return userData.find((user: User) => user.email === email && user.password === password);
+const userData: User[] = userDataJson as User[];
+
+const login = async ({email, password}: LogInInfo) => {
+    const user = userData.find((user: User) => user.email === email)
+    const comparePasswordResult = user 
+        ? await bcrypt.compare(password, user.password)
+        : false;
+
+    if (!(user && comparePasswordResult)) {
+        throw new Error("Incorrect email or password!")
+    }
+
+    return { id: user.id, name: user.name, email: user.email };
 }
 
-const signUp = ({name, email, password}: SignUpInfo) => {
+const signUp = async ({name, email, password}: SignUpInfo) => {
     const existingUser = userData.find((user: User) => user.email === email);
     if (existingUser) {
         throw new Error("User with this email already exists");
     }
 
+    const hashedPassword = await bcrypt.hash(password, 10);
+
     const newUser: User = {
         id: userData.length + 1,
         name,
         email,
-        password
+        password: hashedPassword
     }
 
     userData.push(newUser);
