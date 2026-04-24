@@ -1,8 +1,10 @@
 import bcrypt from "bcrypt"
+import jwt from "jsonwebtoken";
 import userDataJson from "./dummy.json";
 import { LogInInfo, SignUpInfo, User } from "./types";
 
 const userData: User[] = userDataJson as User[];
+const secretKey = process.env.JWT_SECRET;
 
 const login = async ({email, password}: LogInInfo) => {
     const user = userData.find((user: User) => user.email === email)
@@ -14,7 +16,9 @@ const login = async ({email, password}: LogInInfo) => {
         throw new Error("Incorrect email or password!")
     }
 
-    return { id: user.id, name: user.name, email: user.email };
+    const loginToken = jwt.sign({ id: user.id, email: user.email }, secretKey as string, { expiresIn: "1h" });
+
+    return { token: loginToken , email: user.email };
 }
 
 const signUp = async ({name, email, password}: SignUpInfo) => {
